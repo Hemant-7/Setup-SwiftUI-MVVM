@@ -11,7 +11,15 @@ import SwiftUI
 struct SetupApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+//            ContentView()
+            
+            NavigationStack {
+                if let _ = UserObject().getObject(forKey: UserObject.Constants.token) as? String {
+                    HomeView(viewModel: HomeViewModel())
+                } else {
+                    LoginView(viewModel: LoginViewModel())
+                }
+            }
         }
     }
 }
