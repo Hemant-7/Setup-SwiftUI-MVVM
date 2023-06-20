@@ -52,14 +52,14 @@ extension EndPoint {
     }
     
     static var profile: Self {
-        EndPoint(path: "users")
+        EndPoint(path: "api/authaccount/users")
     }
     
     static var updateProfile: Self {
-        EndPoint(path: "users")
+        EndPoint(path: "api/authaccount/users")
     }
     
     static var deleteUser: Self {
-        EndPoint(path: "users")
+        EndPoint(path: "api/authaccount/users")
     }
 }
