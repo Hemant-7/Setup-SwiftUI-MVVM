@@ -80,7 +80,10 @@ class LoginViewModel: ObservableObject {
                     switch result {
                         
                     case .success(let data):
+                        print("DATA:: \(data.message)")
                         if data.code == 0 {
+                            
+                           
                             self.isLogin = true
                             if let token = data.data?.token {
                                 UserObject().setValue(value: token, forKey: UserObject.Constants.token)

@@ -12,8 +12,6 @@ struct HomeView: View {
     @StateObject var viewModel: HomeViewModel
     
     var body: some View {
-//        ZStack {
-//            Color.theme.background
             VStack {
                 navigation
                 if viewModel.arrayOfUsers.count > 0 {
@@ -28,7 +26,6 @@ struct HomeView: View {
                     }
                 }
             }
-//        }
     }
     
     private var navigation: some View {
@@ -40,6 +37,9 @@ struct HomeView: View {
                 Image("logout")
                     .resizable()
                     .frame(width: 32, height: 32)
+                    .onSubmit() {
+                        print("aaaa")
+                    }
             }
             .padding(.trailing)
         }

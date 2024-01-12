@@ -30,7 +30,7 @@ class SignupDataService {
                                   "password": password
         ]
         
-        cancellables = NetworkingManager.downloadDataWith(endPoint: .signup, httpMethod: .post, body: body)
+        cancellables = NetworkingManager.shared.downloadDataWith(endPoint: .signup, httpMethod: .post, body: body)
             .decode(type: Signup.self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { completion in

@@ -8,7 +8,11 @@
 import Foundation
 import Combine
 
-class NetworkingManager {
+class NetworkingManager: NSObject {
+    
+    static let shared = NetworkingManager()
+    
+    override private init() {}
     
     enum NetworkingError: LocalizedError, Error {
         case badURLResponse(url: URL)
@@ -24,9 +28,17 @@ class NetworkingManager {
         }
     }
     
-    static func downloadDataWith(endPoint: EndPoint, httpMethod: HTTPMethod, body: [String:Any]? = nil, queryString: String = "") -> AnyPublisher<Data, Error> {
+    func downloadDataWith(endPoint: EndPoint, httpMethod: HTTPMethod, body: [String:Any]? = nil, queryString: String = "") -> AnyPublisher<Data, Error> {
         
-        print("URL: \(endPoint.url)")
+        print("Request URL: \(endPoint.url)")
+        print("Request Method: \(httpMethod.value)")
+        
+        if let body = body,
+           let httpBody = try? JSONSerialization.data(withJSONObject: body, options: .fragmentsAllowed),
+           let jsonString = String(data: httpBody, encoding: .utf8) {
+            print("Request JSON: \(jsonString)")
+        }
+        
         var request = URLRequest(url: endPoint.url)
         request.httpMethod = httpMethod.value
         
@@ -36,18 +48,49 @@ class NetworkingManager {
             request.addValue("Token \(token)", forHTTPHeaderField: "Authorization")
         }
         
-        if let body = body,
-           let httpBody = try? JSONSerialization.data(withJSONObject: body, options: .fragmentsAllowed) {
-            request.httpBody = httpBody
-        }
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
         
-        print("URL: \(body)")
-        
-        return URLSession.shared.dataTaskPublisher(for: request)
+        return session.dataTaskPublisher(for: request)
             .subscribe(on: DispatchQueue.global(qos: .default))
-            .tryMap({ try handleURLResponse(output: $0, url: endPoint.url) })
+            .tryMap({ try NetworkingManager.handleURLResponse(output: $0, url: endPoint.url) })
             .receive(on: DispatchQueue.main)
             .retry(3)
+            .map { data in
+                do {
+                    let json = try JSONSerialization.jsonObject(with: data, options: [])
+                    if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted),
+                       let jsonString = String(data: jsonData, encoding: .utf8) {
+                        print("Response JSON: \(jsonString)")
+                    }
+                } catch {
+                    print("Error decoding response: \(error)")
+                }
+                return data
+            }
+            .eraseToAnyPublisher()
+    }
+    
+    
+    func request(request: URLRequest, endPoint: EndPoint) -> AnyPublisher<Data, Error> {
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
+        
+        return session.dataTaskPublisher(for: request)
+            .subscribe(on: DispatchQueue.global(qos: .default))
+            .tryMap({ try NetworkingManager.handleURLResponse(output: $0, url: endPoint.url) })
+            .receive(on: DispatchQueue.main)
+            .retry(3)
+            .map { data in
+                do {
+                    let json = try JSONSerialization.jsonObject(with: data, options: [])
+                    if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted),
+                       let jsonString = String(data: jsonData, encoding: .utf8) {
+                        print("Response JSON: \(jsonString)")
+                    }
+                } catch {
+                    print("Error decoding response: \(error)")
+                }
+                return data
+            }
             .eraseToAnyPublisher()
     }
     
@@ -94,5 +137,12 @@ extension NetworkingManager {
                 return "DELETE"
             }
         }
+    }
+}
+
+extension NetworkingManager: URLSessionDelegate {
+    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        print("CERTIFICATE TRUSTED BY DEFAULT")
+        completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
     }
 }

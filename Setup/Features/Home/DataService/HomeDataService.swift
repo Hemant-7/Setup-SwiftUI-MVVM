@@ -14,11 +14,11 @@ class HomeDataService {
     var cancellables: AnyCancellable?
     
     var page: Int = 1
-    var url: String = "api/usersq"
+    var url: String = "api/users"
     
     func users() {
         
-        cancellables = NetworkingManager.downloadDataWith(endPoint: .usersList(page: page, url: url), httpMethod: .get)
+        cancellables = NetworkingManager.shared.downloadDataWith(endPoint: .usersList(page: page, url: url), httpMethod: .get)
             .decode(type: Users.self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { completion in

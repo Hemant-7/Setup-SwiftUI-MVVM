@@ -26,7 +26,7 @@ class LoginDataService {
         let body: [String:Any] = ["email": email,
                                   "password": password]
         
-        cancellables = NetworkingManager.downloadDataWith(endPoint: .login, httpMethod: .post, body: body)
+        cancellables = NetworkingManager.shared.downloadDataWith(endPoint: .login, httpMethod: .post, body: body)
             .decode(type: Login.self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { completion in
